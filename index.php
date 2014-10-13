@@ -1,11 +1,19 @@
 <?php
 
+// require 'rb.php';
+
+// R::setup('mysql:host=localhost;port=8889;dbname=utag','root','root');
+
 require 'mini/Mini.php';
 
 \mini\Mini::registerAutoloader();
 
-$app = new \mini\Mini();
+// $container = new \mini\utils\Container();
+// $container->set('foo', 'bar');
+// var_dump($container);
 
+$app = new \mini\Mini();
+// print_r(get_class_methods(new \Mini\Mini()));
 $app->get('/fu/:id', function ($id) {
 	echo 'GET fu #' . $id;
 })->conditions(array('id' => '\d+'));
@@ -22,7 +30,15 @@ $app->get('/team/:members+', function ($members) use ($app) {
 });
 
 $app->post('/tag/create', function () {
-	echo 'POST tag id = ';
+	// $tag = R::dispense( 'tag' );
+	// $tag->name = 'php';
+	// $id = R::store($tag);
+	// var_dump($tag);
+	// echo 'POST tag id = ' . $id;
 });
 
+// var_dump($app->container->get('environment'));
+
 $app->run();
+
+// R::close();

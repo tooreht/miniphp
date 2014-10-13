@@ -5,8 +5,8 @@
 *
 * @author tooreht <tooreht@gmail.com>
 * @copyright 2014 tooreht
-* @link https://github.com/tooreht/miniphp
-* @license https://github.com/tooreht/miniphp/license
+* @link http://www.miniframework.com
+* @license http://www.miniframework.com/license
 * @version 0.0.1
 * @package Mini
 */
@@ -99,6 +99,9 @@ class Route
 
 	public function matches($resourceUri)
 	{
+		// var_dump($this->pattern);
+		// var_dump($resourceUri);
+
 		// Convert URL params into regex patterns, construct a regex for this route, init params
 		$patternAsRegex = preg_replace_callback(
 			'#:([\w]+)\+?#',
@@ -111,8 +114,15 @@ class Route
 		}
 		// Cache URL params' names and values if this route matches the current HTTP request
 		if (!preg_match($regex, $resourceUri, $paramValues)) {
+			// echo 'failed' . $regex;
 			return false;
 		}
+
+		// echo 'success' . $regex;
+		// echo $regex;
+		// var_dump($paramValues);
+		// var_dump($this->paramNames);
+		// var_dump($this->paramNamesPath);
 
 		foreach ($this->paramNames as $paramName)
 		{
@@ -129,11 +139,17 @@ class Route
 			}
 		}
 
+		// echo '***';
+		// var_dump($this->params);
+		// echo '***';
+
 		return true;
 	}
 
 	public function matchesCallback($match)
 	{
+		// var_dump($match);
+
 		$this->paramNames[] = $match[1];
 
 		if (isset($this->conditions[$match[1]]))

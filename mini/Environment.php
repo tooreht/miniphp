@@ -5,8 +5,8 @@
 *
 * @author tooreht <tooreht@gmail.com>
 * @copyright 2014 tooreht
-* @link https://github.com/tooreht/miniphp
-* @license https://github.com/tooreht/miniphp/license
+* @link http://www.miniframework.com
+* @license http://www.miniframework.com/license
 * @version 0.0.1
 * @package Mini
 */
