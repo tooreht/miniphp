@@ -1,20 +1,27 @@
 <?php
 
 /**
-* Mini - a micro PHP 5 framework
-*
-* @author tooreht <tooreht@gmail.com>
-* @copyright 2014 tooreht
-* @link http://www.miniframework.com
-* @license http://www.miniframework.com/license
-* @version 0.0.1
-* @package Mini
-*/
+ * Mini - a micro PHP 5 framework
+ *
+ * @author tooreht <tooreht@gmail.com>
+ * @copyright 2014 tooreht
+ * @link http://www.miniframework.com
+ * @license http://www.miniframework.com/license
+ * @version 0.0.1
+ * @package Mini
+ */
 
 namespace mini;
 
+use mini\http\StackBuilder;
+use mini\utils\Container;
+
 class Route
 {
+	/**
+	 * @var \mini\utils\Container
+	 */
+	public $container;
 	protected $methods = array();
 	protected $pattern;
 	protected $callable;
@@ -32,12 +39,38 @@ class Route
 	protected $name;
 	protected $conditions = array();
 	protected $caseSensitive = false;
-	protected $middleware = array();
 
 	public function __construct($pattern, $callable)
 	{
 		$this->pattern = $pattern;
 		$this->setCallable($callable);
+
+		$this->container = new Container();
+
+		// middleware
+		$this->container->singleton('middleware', function ($c) {
+			return new StackBuilder();
+		});
+	}
+
+	public function __get($name)
+	{
+		return $this->container[$name];
+	}
+
+	public function __set($name, $value)
+	{
+		$this->container[$name] = $value;
+	}
+
+	public function __isset($name)
+	{
+		return isset($this->container[$name]);
+	}
+
+	public function __unset($name)
+	{
+		unset($this->container[$name]);
 	}
 
 	public function via() {
@@ -48,15 +81,20 @@ class Route
 		return $this;
 	}
 
-	public function methods()
+	public function getMethods()
 	{
 		return $this->methods;
 	}
 
-	public function pattern()
+	public function getPattern()
 	{
 		return $this->pattern;
 	}
+
+	public function getParams()
+	{
+		return $this->params;
+	}	
 
 	public function getCallable()
 	{
@@ -88,13 +126,13 @@ class Route
 		$this->callable = $callable;
 	}
 
-	public function supportsHttpMethod($method) {
-		return in_array($method, $this->methods);
-	}
-
 	public function conditions($conditions = array())
 	{
 		$this->conditions = $conditions;
+	}
+
+	public function supportsHttpMethod($method) {
+		return in_array($method, $this->methods);
 	}
 
 	public function matches($resourceUri)
@@ -163,55 +201,5 @@ class Route
 		}
 
 		return '(?P<' . $match[1] . '>[^/]+)';
-	}
-
-	public function dispatch()
-	{
-		foreach ($this->middleware as $mw) {
-			call_user_func_array($mw, array($this));
-		}
-
-		$return = call_user_func_array($this->getCallable(), array_values($this->params));
-		return !($return === false);
-	}
-
-	/**
-	* Get middleware
-	* @return array[Callable]
-	*/
-	public function getMiddleware()
-	{
-		return $this->middleware;
-	}
-
-	/**
-	* Set middleware
-	*
-	* This method allows middleware to be assigned to a specific Route.
-	* If the method argument `is_callable` (including callable arrays!),
-	* we directly append the argument to `$this->middleware`. Else, we
-	* assume the argument is an array of callables and merge the array
-	* with `$this->middleware`. Each middleware is checked for is_callable()
-	* and an InvalidArgumentException is thrown immediately if it isn't.
-	*
-	* @param Callable|array[Callable]
-	* @return \Slim\Route
-	* @throws \InvalidArgumentException If argument is not callable or not an array of callables.
-	*/
-	public function setMiddleware($middleware)
-	{
-		if (is_callable($middleware)) {
-			$this->middleware[] = $middleware;
-		} else if (is_array($middleware)) {
-			foreach ($middleware as $callable) {
-				if (!is_callable($callable)) {
-					throw new \InvalidArgumentException('All Route middleware must be callable');
-				}
-			}
-			$this->middleware = array_merge($this->middleware, $middleware);
-		} else {
-			throw new \InvalidArgumentException('Route middleware must be callable or an array of callables');
-		}
-		return $this;
 	}
 }

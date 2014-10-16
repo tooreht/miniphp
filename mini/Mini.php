@@ -1,94 +1,81 @@
 <?php
 
 /**
-* Mini - a micro PHP 5 framework
-*
-* @author tooreht <tooreht@gmail.com>
-* @copyright 2014 tooreht
-* @link http://www.miniframework.com
-* @license http://www.miniframework.com/license
-* @version 0.0.1
-* @package Mini
-*/
+ * Mini - a micro PHP 5 framework
+ *
+ * @author tooreht <tooreht@gmail.com>
+ * @copyright 2014 tooreht
+ * @link http://www.miniframework.com
+ * @license http://www.miniframework.com/license
+ * @version 0.0.1
+ * @package Mini
+ */
 
 namespace mini;
 
-class Mini
+use mini\Environment;
+use mini\Route;
+use mini\http\HttpKernelInterface;
+use mini\http\Response;
+use mini\http\Request;
+use mini\http\StackBuilder;
+use mini\utils\Container;
+
+class Mini implements HttpKernelInterface
 {
+	/**
+	 * @var \mini\utils\Container
+	 */
 	public $container;
 
 	public function __construct()
 	{
-		$this->container = new \mini\utils\Container();
+		$this->container = new Container();
 		
 		// environment
 		$this->container->singleton('environment', function ($c) {
-			return \mini\Environment::getInstance();
+			return Environment::getInstance();
 		});
 
 		// request
 		$this->container->singleton('request', function ($c) {
-			return new \mini\http\Request($c['environment']);
+			return new Request($c['environment']);
 		});
 
 		// response
 		$this->container->singleton('response', function ($c) {
-			return new \mini\http\Response($c['environment']);
+			return new Response($c['environment']);
 		});
 
 		// router
 		$this->container->singleton('router', function ($c) {
-			return new \mini\Router();
+			return new Router();
+		});
+
+		// middleware
+		$this->container->singleton('middleware', function ($c) {
+			return new StackBuilder();
 		});
 	}
 
-	/**
-	* Mini PSR-0 autoloader
-	*/
-	public static function autoload($className)
+	public function __get($name)
 	{
-		// $thisClass = str_replace(__NAMESPACE__.'\\', '', __CLASS__);
-		// $baseDir = __DIR__;
-
-		// echo $className;
-		// echo $thisClass;
-		// echo __NAMESPACE__;
-
-		$root = dirname(dirname(__FILE__));
-
-		$fileName = $root . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
-		// echo $fileName;
-
-		// if (substr($baseDir, -strlen($thisClass)) === $thisClass) {
-		// $baseDir = substr($baseDir, 0, -strlen($thisClass));
-		// }
-		// $className = ltrim($className, '\\');
-		// $fileName = $baseDir;
-		// $namespace = '';
-		// if ($lastNsPos = strripos($className, '\\')) {
-		// $namespace = substr($className, 0, $lastNsPos);
-		// $className = substr($className, $lastNsPos + 1);
-		// $fileName .= str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
-		// }
-		// $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
-		if (file_exists($fileName)) {
-			require_once $fileName;
-		}
-	}
-	/**
-	* Register Mini's PSR-0 autoloader
-	*/
-	public static function registerAutoloader()
-	{
-		spl_autoload_register(__NAMESPACE__ . "\\Mini::autoload");
+		return $this->container[$name];
 	}
 
-	public function addMiddleware($middleware = array())
+	public function __set($name, $value)
 	{
-		foreach ($middleware as $mw)
-		{
-			$this->container->middleware[] = $mw;
-		}
+		$this->container[$name] = $value;
+	}
+
+	public function __isset($name)
+	{
+		return isset($this->container[$name]);
+	}
+
+	public function __unset($name)
+	{
+		unset($this->container[$name]);
 	}
 
 	public function map($args)
@@ -96,11 +83,13 @@ class Mini
 		$pattern = array_shift($args);
 		$callable = array_pop($args);
 
-		$route = new \mini\Route($pattern, $callable);
+		$route = new Route($pattern, $callable);
 
-		$this->container->router->map($route);
+		$this->router->map($route);
 
-		$this->addMiddleware($args);
+		foreach ($args as $md) {
+			$route->middleware->push($md);
+		}
 
 		return $route;
 	}
@@ -110,8 +99,12 @@ class Mini
 	 */
 	public function get()
 	{
+        if (func_num_args() < 2) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling get");
+        }
+
 		$args = func_get_args();
-		return $this->map($args)->via(\mini\http\Request::METHOD_GET, \mini\http\Request::METHOD_HEAD);
+		return $this->map($args)->via(Request::METHOD_GET, Request::METHOD_HEAD);
 	}
 
 	/**
@@ -119,8 +112,12 @@ class Mini
 	 */
 	public function post()
 	{
+        if (func_num_args() < 2) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling post");
+        }
+
 		$args = func_get_args();
-		return $this->map($args)->via(\mini\http\Request::METHOD_POST);
+		return $this->map($args)->via(Request::METHOD_POST);
 	}
 
 	/**
@@ -128,8 +125,12 @@ class Mini
 	 */
 	public function put()
 	{
+        if (func_num_args() < 2) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling put");
+        }
+
 		$args = func_get_args();
-		return $this->map($args)->via(\mini\http\Request::METHOD_PUT);
+		return $this->map($args)->via(Request::METHOD_PUT);
 	}
 
 	/**
@@ -137,8 +138,12 @@ class Mini
 	 */
 	public function patch()
 	{
+        if (func_num_args() < 2) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling patch");
+        }
+
 		$args = func_get_args();
-		return $this->map($args)->via(\mini\http\Request::METHOD_PATCH);
+		return $this->map($args)->via(Request::METHOD_PATCH);
 	}
 
 	/**
@@ -146,8 +151,12 @@ class Mini
 	 */
 	public function delete()
 	{
+        if (func_num_args() < 2) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling delete");
+        }
+
 		$args = func_get_args();
-		return $this->map($args)->via(\mini\http\Request::METHOD_DELETE);
+		return $this->map($args)->via(Request::METHOD_DELETE);
 	}
 
 	/**
@@ -155,22 +164,26 @@ class Mini
 	 */
 	public function run()
 	{
-		$method = $this->container->request->method();
-		$resourceUri = $this->container->request->resourceUri();
-		$routes = $this->container->router->matchRoutes($method, $resourceUri);
+		$app = $this->middleware->resolve($this);
+		$app->handle($this->request);
+	}
 
-		// var_dump($routes);
+    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+    {
+		$method = $request->getMethod();
+		$resourceUri = $request->getResourceUri();
+		$routes = $this->router->matchRoutes($method, $resourceUri);
+		
 		ob_start();
-		if (empty($routes))
-		{
-			$this->container->response->notFound();
+		if ($routes) {
+			foreach ($routes as $route) {
+				echo call_user_func_array($route->getCallable(), array_values($route->getParams()));
+			}			
 		}
 		else
 		{
-			foreach ($routes as $route) {
-				$route->dispatch();
-			}
+			$this->response->notFound();
 		}
 		ob_end_flush();
-	}
+    }
 }

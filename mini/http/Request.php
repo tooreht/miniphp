@@ -1,17 +1,19 @@
 <?php
 
 /**
-* Mini - a micro PHP 5 framework
-*
-* @author tooreht <tooreht@gmail.com>
-* @copyright 2014 tooreht
-* @link http://www.miniframework.com
-* @license http://www.miniframework.com/license
-* @version 0.0.1
-* @package Mini
-*/
+ * Mini - a micro PHP 5 framework
+ *
+ * @author tooreht <tooreht@gmail.com>
+ * @copyright 2014 tooreht
+ * @link http://www.miniframework.com
+ * @license http://www.miniframework.com/license
+ * @version 0.0.1
+ * @package Mini
+ */
 
 namespace mini\http;
+
+use mini\Environment;
 
 class Request
 {
@@ -24,18 +26,18 @@ class Request
 	const METHOD_OPTIONS = 'OPTIONS';
 	const METHOD_OVERRIDE = '_METHOD';
 
-	public function __construct(\mini\Environment $env)
+	public function __construct(Environment $env)
 	{
 		$this->env = $env;
 		// ... 
 	}
 
-	public function method()
+	public function getMethod()
 	{
-		return $this->env->get('REQUEST_METHOD');
+		return $this->env->REQUEST_METHOD;
 	}
 
-	public static function methods()
+	public static function getMethods()
 	{
 		return array(
 			self::METHOD_HEAD,
@@ -49,8 +51,8 @@ class Request
 		);
 	}
 
-	public function resourceUri()
+	public function getResourceUri()
 	{
-		return $this->env->get('PATH');
+		return $this->env->PATH;
 	}
 }

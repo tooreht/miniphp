@@ -1,44 +1,47 @@
 <?php
 
-// require 'rb.php';
+require 'mini/AutoLoader.php';
 
-// R::setup('mysql:host=localhost;port=8889;dbname=utag','root','root');
+mini\AutoLoader::register();
 
-require 'mini/Mini.php';
+$app = new mini\Mini();
 
-\mini\Mini::registerAutoloader();
+$app->get('/', function () use ($app) {
+	return 'Welcome!';
+});
 
-// $container = new \mini\utils\Container();
-// $container->set('foo', 'bar');
-// var_dump($container);
+$app->get('/info', function () use ($app) {
+	var_dump($app->environment);
+	print_r(get_class_methods(new \Mini\Mini()));
+});
 
-$app = new \mini\Mini();
-// print_r(get_class_methods(new \Mini\Mini()));
-$app->get('/fu/:id', function ($id) {
-	echo 'GET fu #' . $id;
+$app->get('/tag/:id', function ($id) use ($app) {
+	return $app->request->getMethod() . ' ' . $id;
+});
+
+$app->post('/tag/add', function () use ($app) {
+	return $app->request->getMethod();
+});
+
+$app->put('/tag/create/', function () {
+	return $app->request->getMethod();
+});
+
+$app->patch('/tag/update/:id', function ($id) use ($app) {
+	return $app->request->getMethod() . ' ' . $id;
+});
+
+$app->delete('/tag/delete/:id', function ($id) use ($app) {
+	return $app->request->getMethod() . ' ' . $id;
 })->conditions(array('id' => '\d+'));
 
-$app->get('/name/:foo/:bar', function ($foo, $bar) {
-	echo 'GET names ' . $foo . ' ' . $bar;
-});
-
-$app->get('/team/:members+', function ($members) use ($app) {
-	echo $app->container->request->method();
-	foreach ($members as $member) {
-		echo $member . "\n";
+$app->get('/tag/:tags+', function ($tags) use ($app) {
+	$out =  $app->request->getMethod();
+	$out .= ' ';
+	foreach ($tags as $tag) {
+		$out .= $tag . "\n";
 	}
+	return $out;
 });
-
-$app->post('/tag/create', function () {
-	// $tag = R::dispense( 'tag' );
-	// $tag->name = 'php';
-	// $id = R::store($tag);
-	// var_dump($tag);
-	// echo 'POST tag id = ' . $id;
-});
-
-// var_dump($app->container->get('environment'));
 
 $app->run();
-
-// R::close();

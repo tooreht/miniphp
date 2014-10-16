@@ -1,17 +1,19 @@
 <?php
 
 /**
-* Mini - a micro PHP 5 framework
-*
-* @author tooreht <tooreht@gmail.com>
-* @copyright 2014 tooreht
-* @link http://www.miniframework.com
-* @license http://www.miniframework.com/license
-* @version 0.0.1
-* @package Mini
-*/
+ * Mini - a micro PHP 5 framework
+ *
+ * @author tooreht <tooreht@gmail.com>
+ * @copyright 2014 tooreht
+ * @link http://www.miniframework.com
+ * @license http://www.miniframework.com/license
+ * @version 0.0.1
+ * @package Mini
+ */
 
 namespace mini;
+
+use mini\utils\Container;
 
 class Environment
 {
@@ -28,19 +30,11 @@ class Environment
 		return self::$instance;
 	}
 
-	/**
-	 * Wrap get method of \mini\utils\Container
-	 */
-	public function get($key)
-	{
-		return $this->variables->get($key);
-	}
-
 	private function __clone() {}
 
 	private function __construct()
 	{
-		$this->variables = new \mini\utils\Container();
+		$this->variables = new Container();
 		$this->variables->set('REQUEST_METHOD', $_SERVER['REQUEST_METHOD']);
 		$this->variables->set('REMOTE_ADDR', $_SERVER['REMOTE_ADDR']);
 		$this->variables->set('SCRIPT_NAME', $_SERVER['SCRIPT_NAME']);
@@ -61,5 +55,15 @@ class Environment
 			$requestUri .= '/';
 		}
 		$this->variables->set('PATH', str_replace($this->variables->get('PATH_INFO'), "/", $requestUri, $count));
+	}
+
+	public function __get($name)
+	{
+		return $this->variables[$name];
+	}
+
+	public function __isset($name)
+	{
+		return isset($this->variables[$name]);
 	}
 }
